@@ -7,26 +7,35 @@ module.exports = (dbPoolInstance) => {
 
     // `dbPoolInstance` is accessible within this function scope
   
-    let getAll = (callback) => {
+    const getAll = (callback) => {
   
       let query = 'SELECT * FROM users';
   
       dbPoolInstance.query(query, (error, queryResult) => {
         if( error ){
-  
-          // invoke callback function with results after query has executed
           callback(error, null);
-  
-        }else{
-  
-          // invoke xports =allback function with results after query has executed
-  
+        } else{
           if( queryResult.rows.length > 0 ){
             callback(null, queryResult.rows);
-  
-          }else{
+          } else{
             callback(null, null);
-  
+          }
+        }
+      });
+    };
+
+    const validateLogin = (user, callback) => {
+      let query = "SELECT * FROM users WHERE username = $1 AND password = $2";
+      let values = [user.username, user.password];
+
+      dbPoolInstance.query(query, values, (error, queryResult) => {
+        if( error ){
+          callback(error, null);
+        } else{
+          if( queryResult.rows.length > 0 ){
+            callback(null, queryResult.rows[0]);
+          } else{
+            callback(null, null);
           }
         }
       });
@@ -34,6 +43,7 @@ module.exports = (dbPoolInstance) => {
   
     return {
       getAll,
+      validateLogin,
     };
   };
   

@@ -1,4 +1,10 @@
+// const { hashSalt } = require("../key.js");
+
 module.exports = (db) => {
+
+    const sha256 = require('js-sha256');
+
+    const salt = process.env.HASHSALT || require("../salt.js");
 
     /**
      * ===========================================
@@ -6,20 +12,80 @@ module.exports = (db) => {
      * ===========================================
      */
   
-    let hardcoded = (req, res) => {
-      res.send('hardcoded string');
-    }
+    // const hardcoded = (req, res) => {
+    //   res.send('hardcoded string');
+    // }
   
-    let users = (req, res) => {
+    const users = (request, response) => {
       db.users.getAll((error, allUsers) => {
-        console.log(allUsers);
-        if (allUsers) {
-            res.send(allUsers);
+        if (error){
+            response.send("Internal Server Error. Please try again later.");
         } else {
-            res.send("no users found");
-        }
-        // res.render('pokemon/index', { allPokemon });
+            console.log(allUsers);
+            if (allUsers) {
+                response.send(allUsers);
+            } else {
+                response.send("no users found");
+            };
+        };
+        // response.render('pokemon/index', { allPokemon });
       });
+    }
+
+    const renderLogin = (req, res) => {
+        let data = {
+            title: "Login"
+        };
+
+        res.render('users/login', data);
+    }
+
+    const validateLogin = (request, response) => {
+        request.body.password = sha256(request.body.password);
+        console.log("request.body", request.body);
+        db.users.validateLogin(request.body, (error, result) => {
+            if (error){
+                response.send("Internal Server Error. Please try again later.");
+            } else {
+                console.log(result);
+                if (result) {
+                    response.cookie("username", request.body.username);
+                    response.cookie("password", request.body.password);
+                    response.redirect("/");
+                } else {
+                    response.send("Invalid username or password");
+                };
+            };
+        });
+    }
+
+    const logout = (request, response) => {
+        response.clearCookie("username");
+        response.clearCookie("password");
+        response.redirect("/");
+    }
+
+    const indexControllerCallback = (req, res) => {
+        let user = {
+            username: req.cookies.username,
+            password: req.cookies.password
+        };
+
+        let data = {
+            title: "home",
+            user: null
+        };
+
+        db.users.validateLogin(user, (error, result) => {
+            if (error){
+                console.log("Internal Server Error. Cannot validate credentials.");
+            } else {
+                if (result) {
+                    data.user = user;
+                };
+            };
+            res.render('home', data);
+        });
     }
   
     /**
@@ -27,10 +93,14 @@ module.exports = (db) => {
      * Export controller functions as a module
      * ===========================================
      */
+
     return {
-      users: users,
-      // index: indexControllerCallback,
-      hardcoded: hardcoded,
+        loginPage: renderLogin,
+        validateLogin: validateLogin,
+        users: users,
+        index: indexControllerCallback,
+        logout: logout,
+        // hardcoded: hardcoded,
     };
   
   }
