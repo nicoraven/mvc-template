@@ -1,5 +1,3 @@
-// const { hashSalt } = require("../key.js");
-
 module.exports = (db) => {
 
     const sha256 = require('js-sha256');
@@ -23,12 +21,16 @@ module.exports = (db) => {
         } else {
             console.log(allUsers);
             if (allUsers) {
+                // let data = {
+                //     title: "All Users",
+                //     users: allUsers
+                // };
+                // response.render("users/users", data);
                 response.send(allUsers);
             } else {
                 response.send("no users found");
             };
         };
-        // response.render('pokemon/index', { allPokemon });
       });
     }
 
@@ -41,7 +43,7 @@ module.exports = (db) => {
     }
 
     const validateLogin = (request, response) => {
-        request.body.password = sha256(request.body.password);
+        request.body.password = sha256(request.body.password + salt);
         console.log("request.body", request.body);
         db.users.validateLogin(request.body, (error, result) => {
             if (error){
