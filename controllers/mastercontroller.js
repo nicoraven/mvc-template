@@ -21,12 +21,11 @@ module.exports = (db) => {
         } else {
             console.log(allUsers);
             if (allUsers) {
-                // let data = {
-                //     title: "All Users",
-                //     users: allUsers
-                // };
-                // response.render("users/users", data);
-                response.send(allUsers);
+                let data = {
+                    title: "All Users",
+                    users: allUsers
+                };
+                response.render("users/users", data);
             } else {
                 response.send("no users found");
             };
